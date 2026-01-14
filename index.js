@@ -34,28 +34,28 @@ app.get('/', (req, res) => {
 // API để list tất cả ảnh trong thư mục public
 app.get('/api/images', (req, res) => {
   const publicDir = path.join(__dirname, 'public');
-  
+
   fs.readdir(publicDir, (err, files) => {
     if (err) {
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Unable to read directory',
-        details: err.message 
+        details: err.message
       });
     }
-    
+
     // Lọc chỉ lấy file ảnh (jpg, jpeg, png, gif, webp, svg)
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
     const images = files.filter(file => {
       const ext = path.extname(file).toLowerCase();
       return imageExtensions.includes(ext);
     });
-    
+
     // Tạo full URLs cho mỗi ảnh
     const imageUrls = images.map(filename => ({
       filename: filename,
       url: `http://localhost:${PORT}/images/${filename}`
     }));
-    
+
     res.json({
       total: imageUrls.length,
       images: imageUrls
@@ -65,11 +65,11 @@ app.get('/api/images', (req, res) => {
 
 // Rename all images sequentially based on creation time
 app.get('/api/reorder-images', async (req, res) => {
-  const publicDir = path.join(__dirname, 'public', 'Whisk-Downloads-4');
-  
+  const publicDir = path.join(__dirname, 'public', 'Whisk-Downloads');
+
   try {
     const files = await fs.promises.readdir(publicDir);
-    
+
     // Filter image files
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
     const imageFiles = files.filter(file => {
@@ -88,7 +88,7 @@ app.get('/api/reorder-images', async (req, res) => {
       const match = filename.match(/^(\d+)_/);
       // Default to a high number if no number found, so they go to the end
       const order = match ? parseInt(match[1], 10) : Number.MAX_SAFE_INTEGER;
-      
+
       return {
         filename,
         path: filePath,
@@ -107,7 +107,7 @@ app.get('/api/reorder-images', async (req, res) => {
       // Generate temp name
       const tempName = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}${ext}`;
       const tempPath = path.join(publicDir, tempName);
-      
+
       await fs.promises.rename(file.path, tempPath);
       tempRenames.push({
         currentPath: tempPath,
@@ -134,7 +134,7 @@ app.get('/api/reorder-images', async (req, res) => {
 
       const newFilename = `${seqNum}${file.originalExt}`;
       const newPath = path.join(publicDir, newFilename);
-      
+
       await fs.promises.rename(file.currentPath, newPath);
       results.push({
         old: stats.filename,
@@ -150,17 +150,17 @@ app.get('/api/reorder-images', async (req, res) => {
 
   } catch (err) {
     console.error('Error reordering images:', err);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to reorder images',
-      details: err.message 
+      details: err.message
     });
   }
 });
 
 // API Upload Image
 app.post('/api/upload-image', upload.single('file'), async (req, res) => {
-  const publicDir = path.join(__dirname, 'public', 'Whisk-Downloads-4');
-  
+  const publicDir = path.join(__dirname, 'public', 'Whisk-Downloads');
+
   try {
     const { name } = req.body;
     const file = req.file;
@@ -177,21 +177,21 @@ app.post('/api/upload-image', upload.single('file'), async (req, res) => {
     await fs.promises.mkdir(publicDir, { recursive: true });
 
     const filePath = path.join(publicDir, name);
-    
+
     // Write file to disk (overwrites if exists)
     await fs.promises.writeFile(filePath, file.buffer);
 
     res.json({
       message: 'Image uploaded successfully',
       filename: name,
-      url: `http://localhost:${PORT}/images/Whisk-Downloads-4/${name}`
+      url: `http://localhost:${PORT}/images/Whisk-Downloads/${name}`
     });
 
   } catch (err) {
     console.error('Error uploading image:', err);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to upload image',
-      details: err.message 
+      details: err.message
     });
   }
 });
